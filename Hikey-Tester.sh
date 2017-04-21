@@ -399,7 +399,7 @@ do
 
             echo "Throughput mode:"
             echo "WARNING: -app options values will be not considered"
-            if [ $num_read -lt 2 ]; then
+            if [ $num_read -lt 0 ]; then
                 echo "Overriding readers value $num_read to default -> 2"
                 num_read=2
             fi
@@ -463,7 +463,7 @@ if [ $tracing -eq 1 ]; then
 fi
 
 # Close $app_to_open if present
-close_tester_app
+close_tester_app 2> /dev/null
 
 # Set low_lat to 0 if we are running a
 # throughput test

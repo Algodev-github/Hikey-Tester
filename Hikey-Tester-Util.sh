@@ -92,9 +92,9 @@ change_sched () {
 		echo $low_lat > /sys/block/$HD/queue/iosched/low_latency
 		echo -n "Low latency:"
         cat /sys/block/$HD/queue/iosched/low_latency
-    #    	echo $sliceidle > /sys/block/mmcblk0/queue/iosched/slice_idle
-	#	echo -n Slice idle:
-    #    	cat /sys/block/mmcblk0/queue/iosched/slice_idle
+		#echo 0 > /sys/block/mmcblk0/queue/iosched/slice_idle
+	    #echo -n Slice idle:
+        #	cat /sys/block/mmcblk0/queue/iosched/slice_idle
 	fi
 }
 

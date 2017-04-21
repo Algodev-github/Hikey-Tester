@@ -23,6 +23,7 @@ script_name="Hikey-Tester-Demo"
 test_script="Hikey-Tester.sh"
 lat_workloads=( "" "-r 3" "-r 2 -w 1")
 thr_workloads=( "-r 3" "-r 2 -w 1")
+rand=0
 schedulers=(noop bfq)
 video=file:///sdcard/Hikey-Tester/demo.mp4
 my_pid_file=Hikey-Tester-Pid.txt
@@ -53,6 +54,7 @@ show_help () {
     -throughput: run the throughput test only
     -video : run the video playing test only
     -update : run the update test only
+    -rand : if true, use also random background workload (throughput test only)
     -enable_pause: enable a \"[Enter] to start\" step every test
     -help| -h : display this message
 
@@ -107,7 +109,8 @@ pause () {
     fi
 
     if [ $debug -eq 1 ]; then
-        echo -n "sh $test_script -sched $scheduler -time $time_test $scheduler $background_io $low_latency_enabled\n"
+        echo -n "sh $test_script -sched $scheduler -time $time_test $scheduler\
+                                        $background_io $low_latency_enabled\n"
     fi
     sh $test_script -sched $scheduler -time $time_test $background_io $low_latency_enabled
 }
@@ -120,10 +123,22 @@ start_thr_test () {
         echo -n "sh $test_script -sched $scheduler $background_io -thr -time 35\n"
     fi
 
-    sh $test_script -sched $scheduler $background_io -thr -time 35
+    local thr_cmd="sh $test_script -sched $scheduler $background_io -thr -time 35"
+    eval "$thr_cmd"
 
     local workload="$(echo -e $background_io | sed 's/ //g')"
     mv outfile.txt $results_dir/"outfile-$scheduler$workload.txt"
+
+    # If rand is set, run also the test with random workload
+    if [ $rand -eq 1 ];then
+
+        if [ $debug -eq 1 ];then
+            echo "Running thr test with random workload"
+        fi
+
+        eval "$thr_cmd -rand true"
+        mv outfile.txt $results_dir/"outfile-$scheduler$workload-rand.txt"
+    fi
 }
 
 
@@ -138,7 +153,8 @@ start_video_test () {
 
 
     if [ $debug -eq 1 ]; then
-        echo -n "sh $test_script -sched $scheduler $background_io -video $video $low_latency_enabled\n"
+        echo -n "sh $test_script -sched $scheduler $background_io -video\
+                                            $video $low_latency_enabled\n"
     fi
 
     sh $test_script -sched $scheduler $background_io -video $video $low_latency_enabled
@@ -168,7 +184,8 @@ run_test () {
     if [ "$test_workload_name" == "update" ]; then
         local workload="-update"
         for i in ${schedulers[@]}; do
-            local message_param="Starting the $test_type test with the following parameters:\n- scheduler: $i\n- workload: $workload"
+            local message_param="Starting the $test_type test with the following\
+                            parameters:\n- scheduler: $i\n- workload: $workload"
             echo "\n$message_param"
 
             if [[ $enable_pause -eq 1 ]]; then
@@ -193,7 +210,8 @@ run_test () {
         fi
 
         for i in ${schedulers[@]}; do
-            local message_param="Starting the $test_type test with the following parameters:\n- scheduler: $i\n- workload: $workload"
+            local message_param="Starting the $test_type test with the following\
+                            parameters:\n- scheduler: $i\n- workload: $workload"
             echo "\n$message_param"
 
             if [[ $enable_pause -eq 1 ]]; then
@@ -254,6 +272,10 @@ do
             run_all=0
             shift
             ;;
+        -rand)
+            rand=1
+            shift
+            ;;
         -debug)
             debug=1
             shift
@@ -279,6 +301,7 @@ if [[ "$USER" != 'root' ]]; then
    echo "This script must be run as root" 1>&2
    exit 1
 fi
+
 
 # Execute only the test choosen
 if [[ $run_all -eq 1 || $run_lat -eq 1 ]]; then
