@@ -18,7 +18,8 @@
 # the board with Hikey-Tester suite
 
 # Main variables
-needed_files=("Hikey-Timer.sh" "Hikey-Tester.sh" "Hikey-Video-Play.sh" "Hikey-Tester-Util.sh" "Hikey-Open-Application.sh" "Hikey-Update-Workload.sh" "demo.mp4")
+needed_files=("Hikey-Timer.sh" "Hikey-Tester.sh" "Hikey-Video-Play.sh" \
+"Hikey-Tester-Util.sh" "Hikey-Open-Application.sh" "Hikey-Update-Workload.sh" "demo.mp4")
 demo_file="Hikey-Demo.sh"
 test_folder="/sdcard/Hikey-Tester/"
 res_folder="$test_folder/Results-Demo"
@@ -27,7 +28,9 @@ fio_folder="$test_folder/fiojobs"
 # Utility functions
 check_command_dependecies () {
     local check_command=$1
-    command -v $check_command >/dev/null 2>&1 || { echo >&2 "ERROR: $check_command required but it's not installed.\nAborting."; exit 1; }
+    command -v $check_command >/dev/null 2>&1 || \
+    { echo >&2 "ERROR: $check_command required but it's not installed.\nAborting.";
+     exit 1; }
 }
 
 file_exists () {
