@@ -35,6 +35,7 @@ run_update=0
 enable_pause=0
 debug=0
 results_dir="Results-Demo"
+group_results=0
 
 # Utility functions
 show_help () {
@@ -56,6 +57,7 @@ show_help () {
     -update : run the update test only
     -rand : if true, use also random background workload (throughput test only)
     -enable_pause: enable a \"[Enter] to start\" step every test
+    -group_results: group the results of the throughput test for every scheduler
     -help| -h : display this message
 
     Advanced options:
@@ -109,8 +111,7 @@ pause () {
     fi
 
     if [ $debug -eq 1 ]; then
-        echo -n "sh $test_script -sched $scheduler -time $time_test $scheduler\
-                                        $background_io $low_latency_enabled\n"
+        echo -n "sh $test_script -sched $scheduler -time $time_test $scheduler $background_io $low_latency_enabled\n"
     fi
     sh $test_script -sched $scheduler -time $time_test $background_io $low_latency_enabled
 }
@@ -153,8 +154,7 @@ start_video_test () {
 
 
     if [ $debug -eq 1 ]; then
-        echo -n "sh $test_script -sched $scheduler $background_io -video\
-                                            $video $low_latency_enabled\n"
+        echo -n "sh $test_script -sched $scheduler $background_io -video $video $low_latency_enabled\n"
     fi
 
     sh $test_script -sched $scheduler $background_io -video $video $low_latency_enabled
@@ -184,8 +184,7 @@ run_test () {
     if [ "$test_workload_name" == "update" ]; then
         local workload="-update"
         for i in ${schedulers[@]}; do
-            local message_param="Starting the $test_type test with the following\
-                            parameters:\n- scheduler: $i\n- workload: $workload"
+            local message_param="Starting the $test_type test with the following parameters:\n- scheduler: $i\n- workload: $workload"
             echo "\n$message_param"
 
             if [[ $enable_pause -eq 1 ]]; then
@@ -210,8 +209,7 @@ run_test () {
         fi
 
         for i in ${schedulers[@]}; do
-            local message_param="Starting the $test_type test with the following\
-                            parameters:\n- scheduler: $i\n- workload: $workload"
+            local message_param="Starting the $test_type test with the following parameters:\n- scheduler: $i\n- workload: $workload"
             echo "\n$message_param"
 
             if [[ $enable_pause -eq 1 ]]; then
@@ -225,6 +223,18 @@ run_test () {
     done
 }
 
+create_group_results () {
+    local filename="group_report_"
+    local catfile="$results_dir/outfile-"
+    local outfile="$results_dir/group/group_report_"
+
+    mkdir -p $results_dir/group 2> /dev/null
+
+    for sched in ${schedulers[@]}; do
+        echo "Group results for $sched: " > $outfile$sched.txt
+        cat $catfile$sched* | sed '3d;5d;7d' >> $outfile$sched.txt
+    done
+}
 
 close_current_test () {
     echo -n "Continue? [Yy/Nn]: "
@@ -276,6 +286,10 @@ do
             rand=1
             shift
             ;;
+        -group_results)
+            group_results=1
+            shift
+            ;;
         -debug)
             debug=1
             shift
@@ -313,6 +327,13 @@ if [[ $run_all -eq 1 || $run_thr -eq 1 ]]; then
     mkdir $results_dir 2>/dev/null
     run_test "start_thr_test" "throughput" "thr_workloads"
     sleep 2
+
+    if [ $group_results -eq 1 ]; then
+        echo "Creating group results..."
+        sleep 3
+        create_group_results
+        echo "File(s) saved in $results_dir/group"
+    fi
 fi
 
 if [[ $run_all -eq 1 || $run_video -eq 1 ]]; then
